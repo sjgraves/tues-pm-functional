@@ -37,7 +37,8 @@ library(raster)
 
 ```{r IMPORT-CHM}
 
-chm <- raster("../NEONdata/D17-California/TEAK/2013/lidar/TEAK_lidarCHM.tif")
+chm_file <- "../NEONdata/D17-California/TEAK/2013/lidar/TEAK_lidarCHM.tif"
+chm <- raster(chm_file)
 plot(chm,
      main="Raw canopy height model")
 ```
@@ -57,39 +58,67 @@ chm[chm==0] <- NA
 # check to see if zeros are removed
 hist(chm)
 
-```
-
-
-# Set class breaks
-
-Classify the CHM to differentiate between short, medium, and tall vegetation.
-
-```{r VISUALIZE-CHM}
-
-# set threshold value
-thresh <- c(10,20)
-
 par(mfrow=c(1,1))
 
-hist(chm)
-abline(v=thresh,col="blue")
+```
+
+
+# Set class breaks and classify raster
+
+Classify the CHM to differentiate between short, medium, and tall vegetation.
+Use a function to allow for any input of class breaks.
+
+```{r CLASSIFY-FUNCTION}
+
+# function to reclassify raster from provided set of breaks
+# input is vector of break values, where each number is the maximum of that break
+# output is a matrix object with columns as the min, max, and class number
+create_ht_class_matrix <- function(breaks){
+  
+  # get length of breaks vector to figure out how many classes to have
+  brk_len <- length(breaks)
+  
+  # initialize ht class vector
+  ht.class.m <- c(0)
+  
+  # loop through each break and set the lower and upper bound, and class number
+  for(i in 1:brk_len){
+    ht.class.m <- c(ht.class.m,breaks[i-1], breaks[i], i)
+  }
+  
+  # create matrix from vector
+  reclass.ht.m <- matrix(ht.class.m,
+                         ncol=3,
+                         byrow = T)
+  
+  return(reclass.ht.m)
+}
+
 
 ```
+
+```{r PLOT-DENS-WBREAKS}
+
+# plot density of chm with chosen breaks
+# expects a chm, title, and vector of breaks
+
+plot_chm_dens <- function(chm,title,breaks){
+  density(chm,
+          main=title,
+          xlab="Height (m)")
+  abline(v=breaks,col="red")
+  
+}
+
+plot_chm_dens(chm,title="CHM of TEAK with set breaks",breaks)
+
+```
+
+
 
 # Classify raster
 
 ```{r CLASSIFY-RASTER}
-
-class.m <- c(0,thresh[1],1,
-             thresh[1],thresh[2],2,
-             thresh[2],max(chm@data@values,na.rm = T),3)
-
-# reshape the object into a matrix with columns and rows
-rcl.m <- matrix(class.m,
-                nrow=3,
-                byrow = T)
-
-rcl.m
 
 # reclassify the raster using the reclass object - rcl.m
 chm.class <- reclassify(chm,
