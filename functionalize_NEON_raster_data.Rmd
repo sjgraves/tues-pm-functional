@@ -90,16 +90,72 @@ rcl.m <- matrix(class.m,
 chm.class <- reclassify(chm,
                         rcl.m)
 
+
 plot(chm.class,
      main="CHM classified by height thresholds")
-
 ```
 
 
 # Plot classified raster
 
+```{r}
+
+# make room for a legend
+par(xpd = FALSE, mar=c(5.1, 4.1, 4.1, 4.5))
+
+# plot
+plot(chm.class,
+     col=c("white","green","blue","red"),
+     main="Classified CHM by height",
+     legend=F)
+
+# allow legend to plot outside of bounds
+par(xpd=TRUE)
+
+# create the legend
+legend((par()$usr[2] + 20), 4103300,  # set x,y legend location
+       legend = c("Low","Medium","Tall"),  # make sure the order matches the colors, next
+       fill = c("green","blue","red"),
+       bty="n") # turn off border
+
+```
+
+
 # Export plot to PDF
+
+```{r EXPORT-PDF}
+
+pdf("../outputs/TEAK/TEAK_CHM_classified.pdf")
+
+  # make room for a legend
+  par(xpd = FALSE, mar=c(5.1, 4.1, 4.1, 4.5))
+  
+  # plot
+  plot(chm.class,
+       col=c("white","green","blue","red"),
+       main="Classified CHM by height",
+       legend=F)
+  
+  # allow legend to plot outside of bounds
+  par(xpd=TRUE)
+  
+  # create the legend
+  legend((par()$usr[2] + 20), 4103300,  # set x,y legend location
+         legend = c("Low","Medium","Tall"),  # make sure the order matches the colors, next
+         fill = c("green","blue","red"),
+         bty="n") # turn off border
+
+dev.off()
+
+```
+
 
 # Export classified raster to GeoTiff
 
+```{r EXPORT-TIF}
+
+writeRaster(chm.class,"../outputs/TEAK/TEAK_chm_classified.tif",
+            overwrite=T)
+
+```
 
