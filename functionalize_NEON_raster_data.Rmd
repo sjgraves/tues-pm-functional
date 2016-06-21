@@ -30,6 +30,8 @@ rm(list = ls())
 
 library(raster)
 
+source("scripts/functions.R")
+
 ```
 
 
@@ -41,6 +43,8 @@ chm_file <- "../NEONdata/D17-California/TEAK/2013/lidar/TEAK_lidarCHM.tif"
 chm <- raster(chm_file)
 plot(chm,
      main="Raw canopy height model")
+
+breaks <- c(5,10,20,100)
 ```
 
 
@@ -68,52 +72,25 @@ par(mfrow=c(1,1))
 Classify the CHM to differentiate between short, medium, and tall vegetation.
 Use a function to allow for any input of class breaks.
 
-```{r CLASSIFY-FUNCTION}
+```{r CLASSIFY}
 
-# function to reclassify raster from provided set of breaks
-# input is vector of break values, where each number is the maximum of that break
-# output is a matrix object with columns as the min, max, and class number
-create_ht_class_matrix <- function(breaks){
-  
-  # get length of breaks vector to figure out how many classes to have
-  brk_len <- length(breaks)
-  
-  # initialize ht class vector
-  ht.class.m <- c(0)
-  
-  # loop through each break and set the lower and upper bound, and class number
-  for(i in 1:brk_len){
-    ht.class.m <- c(ht.class.m,breaks[i-1], breaks[i], i)
-  }
-  
-  # create matrix from vector
-  reclass.ht.m <- matrix(ht.class.m,
-                         ncol=3,
-                         byrow = T)
-  
-  return(reclass.ht.m)
-}
-
+rcl.m <- create_ht_class_matrix(breaks)
 
 ```
 
 ```{r PLOT-DENS-WBREAKS}
 
-# plot density of chm with chosen breaks
-# expects a chm, title, and vector of breaks
-
-plot_chm_dens <- function(chm,title,breaks){
-  density(chm,
-          main=title,
-          xlab="Height (m)")
-  abline(v=breaks,col="red")
-  
-}
-
 plot_chm_dens(chm,title="CHM of TEAK with set breaks",breaks)
 
 ```
 
+```{r PDF-SAVE-FUNCTION}
+
+make_pdf(plot_chm_dens(chm,title="CHM of TEAK with set breaks",breaks),
+         filename = "TEAK CHM density with breaks2.pdf",
+         width=7,height=6)
+
+```
 
 
 # Classify raster
@@ -124,41 +101,14 @@ plot_chm_dens(chm,title="CHM of TEAK with set breaks",breaks)
 chm.class <- reclassify(chm,
                         rcl.m)
 
-# plot density wtih threshold values
-density(chm,
-        main="Canopy height model distribution\n with class cutoffs",
-        xlab="Height (m)")
-abline(v=thresh,col="red")
-
-
 ```
 
 
 # Plot classified raster
 
-```{r}
+```{r PLOT-RAST}
 
-# make room for a legend
-par(xpd = FALSE, mar=c(5.1, 4.1, 4.1, 4.5))
-
-# plot
-plot(chm.class,
-     col=c("yellow","orange","blue"),
-     main="Classified CHM by height",
-     legend=F)
-
-# allow legend to plot outside of bounds
-par(xpd=TRUE)
-
-# calculate legend position based on where data is plotted
-leg.x <- par()$usr[2] + 20
-leg.y <- par()$usr[4] + 50 - (abs(par()$usr[3] - par()$usr[4])/2)
-
-# create the legend
-legend(leg.x,leg.y,
-       legend=c("low","medium","high"),
-       fill=c("yellow","orange","blue"),
-       bty="n")
+plot_reclassified_raster(chm,"TEAK",breaks)
 
 ```
 
@@ -167,32 +117,7 @@ legend(leg.x,leg.y,
 
 ```{r EXPORT-PDF}
 
-pdf("../outputs/TEAK/TEAK_CHM_classified.pdf",
-    width=7,height=6)
 
-  # make room for a legend
-  par(xpd = FALSE, mar=c(5.1, 4.1, 4.1, 4.5))
-  
-  # plot
-  plot(chm.class,
-       col=c("yellow","orange","blue"),
-       main="Classified CHM by height",
-       legend=F)
-  
-  # allow legend to plot outside of bounds
-  par(xpd=TRUE)
-  
-  # calculate legend position based on where data is plotted
-  leg.x <- par()$usr[2] + 20
-  leg.y <- par()$usr[4] + 50 - (abs(par()$usr[3] - par()$usr[4])/2)
-  
-  # create the legend
-  legend(leg.x,leg.y,
-         legend=c("low","medium","high"),
-         fill=c("yellow","orange","blue"),
-         bty="n")
-
-dev.off()
 
 ```
 
@@ -212,11 +137,6 @@ writeRaster(chm.class,"../outputs/TEAK/TEAK_chm_classified.tif",
 ```{r SET-UP-INFO}
 
 sessionInfo()
-
-sink(paste0(format(Sys.time(),"%Y-%m-%d_%H%M%S"),
-            "_sessionInfo.txt"))
-sessionInfo()
-sink()
 
 ```
 
