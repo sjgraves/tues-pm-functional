@@ -26,6 +26,8 @@ Start by putting up objectives/tasks that students will be working though:
 
 ```{r LOAD-PACKAGES, message=FALSE}
 
+rm(list = ls())
+
 library(raster)
 
 ```
@@ -36,7 +38,8 @@ library(raster)
 ```{r IMPORT-CHM}
 
 chm <- raster("../NEONdata/D17-California/TEAK/2013/lidar/TEAK_lidarCHM.tif")
-plot(chm)
+plot(chm,
+     main="Raw canopy height model")
 ```
 
 
@@ -44,8 +47,8 @@ plot(chm)
 
 ```{r SET-NA}
 
-# view data to see zero values
-plot(chm==0)
+par(mfrow=c(1,2))
+
 hist(chm)
 
 # assign NA to zeros because we don't want to analyze zero values (it's not vegetation)
@@ -63,10 +66,10 @@ Classify the CHM to differentiate between short, medium, and tall vegetation.
 
 ```{r VISUALIZE-CHM}
 
-hist(chm)
-
 # set threshold value
-thresh <- c(103,20)
+thresh <- c(10,20)
+
+par(mfrow=c(1,1))
 
 hist(chm)
 abline(v=thresh,col="blue")
