@@ -17,7 +17,7 @@ Start by putting up objectives/tasks that students will be working though:
 1. For the CHM, **set values** == 0 to NA (not trees)
 1. **Visualize** density and plot vertical cutoff lines.
 1. **Classify** the raster according to some distribution – low medium and tall trees. This could be done using a histogram potentially or we could just decide that <2m is generally grasses / understory, <6m small trees,and the rest are tall trees. A function could import the desired thresholds. Visualize histogram/density and plot vertical cutoff lines.
-1. Take the chm and **create a hillshade** (http://neon-workwithdata.github.io/neon-data-institute-2016/R/create-hillshade-R/)
+ (http://neon-workwithdata.github.io/neon-data-institute-2016/R/create-hillshade-R/)
 1. **Plot** the classified raster, add a legend for each “class” - legends are super tricky to simplifying this process with a function would be good.  see: http://neon-workwithdata.github.io/neon-data-institute-2016/R/classify-by-threshold-R/  for my take on forcing a legend outside of the plot area using par settings. You may have other better forms of magic to make this work well. :)
 1. **Export** the plot figure to a pdf – publishable
 1. **Export** the classified raster as a geotiff with NaFlagg = -9999 to an outputs folder.
@@ -59,14 +59,14 @@ hist(chm)
 
 # Set class breaks
 
-Classify the CHM to differentiate between trees and non-trees. Trees will be those above some threshold.
+Classify the CHM to differentiate between short, medium, and tall vegetation.
 
 ```{r VISUALIZE-CHM}
 
 hist(chm)
 
 # set threshold value
-thresh <- c(3,20)
+thresh <- c(103,20)
 
 hist(chm)
 abline(v=thresh,col="blue")
@@ -86,13 +86,19 @@ rcl.m <- matrix(class.m,
                 nrow=3,
                 byrow = T)
 
+rcl.m
+
 # reclassify the raster using the reclass object - rcl.m
 chm.class <- reclassify(chm,
                         rcl.m)
 
+# plot density wtih threshold values
+density(chm,
+        main="Canopy height model distribution\n with class cutoffs",
+        xlab="Height (m)")
+abline(v=thresh,col="red")
 
-plot(chm.class,
-     main="CHM classified by height thresholds")
+
 ```
 
 
@@ -105,18 +111,22 @@ par(xpd = FALSE, mar=c(5.1, 4.1, 4.1, 4.5))
 
 # plot
 plot(chm.class,
-     col=c("white","green","blue","red"),
+     col=c("yellow","orange","blue"),
      main="Classified CHM by height",
      legend=F)
 
 # allow legend to plot outside of bounds
 par(xpd=TRUE)
 
+# calculate legend position based on where data is plotted
+leg.x <- par()$usr[2] + 20
+leg.y <- par()$usr[4] + 50 - (abs(par()$usr[3] - par()$usr[4])/2)
+
 # create the legend
-legend((par()$usr[2] + 20), 4103300,  # set x,y legend location
-       legend = c("Low","Medium","Tall"),  # make sure the order matches the colors, next
-       fill = c("green","blue","red"),
-       bty="n") # turn off border
+legend(leg.x,leg.y,
+       legend=c("low","medium","high"),
+       fill=c("yellow","orange","blue"),
+       bty="n")
 
 ```
 
@@ -125,25 +135,30 @@ legend((par()$usr[2] + 20), 4103300,  # set x,y legend location
 
 ```{r EXPORT-PDF}
 
-pdf("../outputs/TEAK/TEAK_CHM_classified.pdf")
+pdf("../outputs/TEAK/TEAK_CHM_classified.pdf",
+    width=7,height=6)
 
   # make room for a legend
   par(xpd = FALSE, mar=c(5.1, 4.1, 4.1, 4.5))
   
   # plot
   plot(chm.class,
-       col=c("white","green","blue","red"),
+       col=c("yellow","orange","blue"),
        main="Classified CHM by height",
        legend=F)
   
   # allow legend to plot outside of bounds
   par(xpd=TRUE)
   
+  # calculate legend position based on where data is plotted
+  leg.x <- par()$usr[2] + 20
+  leg.y <- par()$usr[4] + 50 - (abs(par()$usr[3] - par()$usr[4])/2)
+  
   # create the legend
-  legend((par()$usr[2] + 20), 4103300,  # set x,y legend location
-         legend = c("Low","Medium","Tall"),  # make sure the order matches the colors, next
-         fill = c("green","blue","red"),
-         bty="n") # turn off border
+  legend(leg.x,leg.y,
+         legend=c("low","medium","high"),
+         fill=c("yellow","orange","blue"),
+         bty="n")
 
 dev.off()
 
@@ -155,6 +170,8 @@ dev.off()
 ```{r EXPORT-TIF}
 
 writeRaster(chm.class,"../outputs/TEAK/TEAK_chm_classified.tif",
+            format="GTiff",
+            NAflag=-9999,
             overwrite=T)
 
 ```
